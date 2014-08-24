@@ -1,10 +1,10 @@
-LEDs
-=========
+# LEDs #
 
 LEDs dimmed by web interface through RPi!
 
-Installation on Raspberry Pi:
+## Installation on Raspberry Pi ##
 
+~~~
 # Might need to remove 'i2c-dev' or 'i2c-bcm2708' kernel module from autostart blacklist in /etc/modprobe.d/raspi-blacklist.conf
 sudo vi /etc/etc/modprobe.d/raspi-blacklist.conf
 
@@ -18,12 +18,17 @@ git clone https://github.com/Densaugeo/LEDs
 # Start the server
 sudo python ./LEDs/server.py
 
-To start the server automatically when the Pi boots, add it to Cron:
-
+# To start the server automatically when the Pi boots, add it to Cron:
 crontab -e
-
-And add the line '@reboot sudo python [install location]/LEDs/server.py'
+# And add the line '@reboot sudo python [install location]/LEDs/server.py'
+~~~
 
 While the server is running, the PWM channels can be controlled by a simple web page at http://[Raspberry Pi IP]:8080/
 
 To my surprise, no firewall adjustments on the Pi were necessary to access this page
+
+## Licensing ##
+
+Files beginning with 'Adafruit_' were taken from Adafruit's library of Pi code (https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code) and are subject to Adafruit's license (it looks similar to MIT)
+
+All other files are the work of Densaugeo, and are provided under the MIT license
