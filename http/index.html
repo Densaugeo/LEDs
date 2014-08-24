@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<title>Template</title>
+
+<script type="text/javascript">
+// Frame buster
+if(top !== self) {
+  top.location.replace(self.location.href);
+}
+</script>
+
+<style type='text/css'>
+</style>
+</head>
+
+<body>
+</body>
+
+<script type="text/javascript">
+
+//////////////
+// Controls //
+//////////////
+
+var pins = [];
+
+for(var i = 0; i < 16; ++i) {
+  pins[i] = document.createElement('input');
+  pins[i].type = 'range';
+  pins[i].min = 0;
+  pins[i].max = 4095;
+  document.body.appendChild(pins[i]);
+  
+  with({i: i}) pins[i].addEventListener('input', function(e) {
+    ws.send('{"pin":' + i + ',"value":' + pins[i].value + '}');
+  });
+}
+
+///////////////
+// WebSocket //
+///////////////
+
+var ws =  new WebSocket('ws://' + window.location.host);
+
+ws.onmessage = function(e) {
+  console.log('Received message: ' + e.data);
+  console.log(e);
+}
+
+/////////////////////
+// Startup scripts //
+/////////////////////
+
+eval(localStorage.onstart);
+
+</script>
+</html>
