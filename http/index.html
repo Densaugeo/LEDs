@@ -43,7 +43,7 @@ for(var i = 0; i < 16; ++i) {
 // WebSocket //
 ///////////////
 
-var ws =  new WebSocket('ws://' + window.location.host);
+var ws =  new WebSocket('ws://' + window.location.host + '/websocket');
 
 ws.onmessage = function(e) {
   console.log('Received message: ' + e.data);
