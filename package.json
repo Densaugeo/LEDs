@@ -1,6 +1,7 @@
 {
-  "name": "Template",
-  "description": "A template (surprise!)",
+  "name": "LEDs",
+  "version": "0.1.0",
+  "description": "LEDs dimmed by web interface through RPi!",
   "author": "Densaugeo",
   "dependencies": {
     "express": "3.4.x",
