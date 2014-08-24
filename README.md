@@ -25,10 +25,10 @@ crontab -e
 
 While the server is running, the PWM channels can be controlled by a simple web page at http://[Raspberry Pi IP]:8080/
 
-To my surprise, no firewall adjustments on the Pi were necessary to access this page
+To my surprise, no firewall adjustments on the Pi were necessary to access this page.
 
 ## Licensing ##
 
-Files beginning with 'Adafruit_' were taken from Adafruit's library of Pi code (https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code) and are subject to Adafruit's license (it looks similar to MIT)
+Files beginning with 'Adafruit_' were taken from Adafruit's library of Pi code (https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code) and are subject to Adafruit's license (it looks similar to MIT).
 
-All other files are the work of Densaugeo, and are provided under the MIT license
+All other files are the work of Densaugeo, and are provided under the MIT license.
