@@ -1,0 +1,9 @@
+Part                    Digikey #       Manufacturer    #
+---------------------------------------------------------
+PWM Controller          568-8366-5-ND   NXP             PCA9685PW,112
+N-Ch MOSFET             FDN335NCT-ND    Fairchild       FDN335N
+13Ω Resistor            13W-2-ND        Yageo           RSF200JB-73-13R
+15Ω Resistor            15W-2-ND        Yageo           RSF200JB-73-15R
+24Ω Resistor            24W-2-ND        Yageo           RSF200JB-73-24R
+RJ-45 Jack              609-1046-ND
+3x1 0.1" Terminal       ED10562-ND
