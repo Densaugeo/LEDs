@@ -84,17 +84,17 @@ state.leds = [
 if(options.state) {
   try {
     var storedState = fs.readFileSync(options.state);
+    
+    for(var i = 0, endi = Math.floor(storedState.length/10); i < endi; ++i) {
+      var target = storedState.readUInt16LE(10*i);
+      
+      if(state.leds[target]) {
+        state.leds[target] = storedState.slice(10*i, 10*i + 10);
+      }
+    }
   }
   catch(error) {
     console.error('Warning: Unable to read state file "' + options.state + '". (' + error + ')');
-  }
-  
-  for(var i = 0, endi = Math.floor(storedState.length/10); i < endi; ++i) {
-    var target = storedState.readUInt16LE(10*i);
-    
-    if(state.leds[target]) {
-      state.leds[target] = storedState.slice(10*i, 10*i + 10);
-    }
   }
 }
 
