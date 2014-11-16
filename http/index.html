@@ -25,29 +25,82 @@ if(top !== self) {
 // Controls //
 //////////////
 
-var pins = [];
+var forgeElement = function(tagName, properties, children) {
+  var element = document.createElement(tagName);
+  for(var i in properties) {
+    element[i] = properties[i];
+  }
+  if(children) {
+    for(var i = 0, endi = children.length; i < endi; ++i) {
+      element.appendChild(children[i]);
+    }
+  }
+  return element;
+}
+var fE = forgeElement;
 
-for(var i = 0; i < 16; ++i) {
-  pins[i] = document.createElement('input');
-  pins[i].type = 'range';
-  pins[i].min = 0;
-  pins[i].max = 4095;
-  document.body.appendChild(pins[i]);
+var leds = [];
+
+var LED = function(number) {
+  this.state = Uint16Array([number,0,0,0,27]);
   
-  with({i: i}) pins[i].addEventListener('input', function(e) {
-    ws.send('{"pin":' + i + ',"value":' + pins[i].value + '}');
+  this.div = fE('div', {}, [
+    this.red   = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
+    this.green = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
+    this.blue  = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
+    this.alpha = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
+  ]);
+  
+  with(this) this.update = function(array) {
+    this.state.set(array);
+    
+    red.value = state[1];
+    green.value = state[2];
+    blue.value = state[3];
+    alpha.value = state[4];
+  }
+  
+  with(this) red.addEventListener('input', function(e) {
+    state[1] = red.value;
+    ws.send(state.buffer);
   });
+  
+  with(this) green.addEventListener('input', function(e) {
+    state[2] = green.value;
+    ws.send(state.buffer);
+  });
+  
+  with(this) blue.addEventListener('input', function(e) {
+    state[3] = blue.value;
+    ws.send(state.buffer);
+  });
+  
+  with(this) alpha.addEventListener('input', function(e) {
+    state[4] = alpha.value;
+    ws.send(state.buffer);
+  });
+  
+  document.body.appendChild(this.div);
+}
+
+for(var i = 0; i < 5; ++i) {
+  leds[i] = new LED(i);
 }
 
 ///////////////
 // WebSocket //
 ///////////////
 
-var ws =  new WebSocket('ws://' + window.location.host + '/websocket');
+var ws =  new WebSocket('ws://' + window.location.host + '/');
+ws.binaryType = 'arraybuffer';
 
+// Receive state data from relay server
 ws.onmessage = function(e) {
-  console.log('Received message: ' + e.data);
-  console.log(e);
+  var view = Uint16Array(e.data);
+  
+  if(leds[view[0]]) {
+    leds[view[0]].update(view);
+  }
 }
 
 /////////////////////

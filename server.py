@@ -26,33 +26,21 @@ class ControlSocket(tornado.websocket.WebSocketHandler):
     print(timestamp() + ": Websocket opened")
   
   def on_message(self, message):
-    try:
-      messageobject = json.loads(message)
-    except ValueError:
-      print("No valid JSON object")
-      return
+    led   = int((message[1] + message[0]).encode('hex'), 16)
+    red   = int((message[3] + message[2]).encode('hex'), 16)
+    green = int((message[5] + message[4]).encode('hex'), 16)
+    blue  = int((message[7] + message[6]).encode('hex'), 16)
+    alpha = int((message[9] + message[8]).encode('hex'), 16)
     
-    try:
-      pin = int(messageobject["pin"])
-      value = int(messageobject["value"])
-    except ValueError:
-      print("Pin or PWM value not a valid integer")
-      return
-    except AttributeError:
-      print("Pin or PWM value not defined")
-      return
-    
-    if (pin < 0 or pin > 15):
-      print("Pin number out of range")
-      return
-    if (value < 0 or value > 4095):
-      print("PWM value out of range")
-      return
-    
-    pwm.setPWM(pin, 0, value)
+    pwm.setPWM(3*led    , 0,   red*alpha/4095)
+    pwm.setPWM(3*led + 1, 0, green*alpha/4095)
+    pwm.setPWM(3*led + 2, 0,  blue*alpha/4095)
   
   def on_close(self):
     print(timestamp() + ": Websocket closed")
+  
+  def check_origin(self, origin):
+    return True
 
 application = tornado.web.Application([
   (r"/", MainHandler),
@@ -62,5 +50,5 @@ application = tornado.web.Application([
 
 if __name__ == "__main__":
   application.listen(8080, "0.0.0.0")
-  print(timestamp() + ": Starting server listening on port 8080 (all hosts)")
+  print(timestamp() + ": Starting server listening on port 8070 (all hosts)")
   tornado.ioloop.IOLoop.instance().start()
