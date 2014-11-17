@@ -1,7 +1,6 @@
 {
   "ip"    : "0.0.0.0",
   "port"  : 8080,
-  "light" : "daedalus:8080",
   "config": "config.json",
   "state" : "led_state.bin",
   "silent": false

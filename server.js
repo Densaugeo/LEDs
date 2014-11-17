@@ -7,6 +7,7 @@ var express = require('express');
 var ws      = require('ws');
 var stdio   = require('stdio');
 var iz      = require('iz');
+var i2c;
 
 /////////////////
 // Get options //
@@ -15,7 +16,8 @@ var iz      = require('iz');
 var optionsAllowed = {
   'ip'    : {key: 'i', args: 1, description: 'IP address for both HTTP and WS servers. Defaults to OpenShift if available, or if not then 0.0.0.0'},
   'port'  : {key: 'p', args: 1, description: 'TCP port for both HTTP and WS servers. Defaults to OpenShift if available, or if not then 8080'},
-  'light' : {key: 'l', args: 1, description: 'Light\'s WebSocket server. [IP]:[TCP Port]'},
+  'remote': {key: 'r', args: 1, description: 'Remote light\'s WebSocket server. [IP]:[TCP Port]'},
+  'local' : {key: 'l', args: 1, description: 'Control a light locally at the specified i2c address'},
   'config': {key: 'c', args: 1, description: 'Load settings from configurations file. Defaults to ./config.json'},
   'state' : {key: 't', args: 1, description: 'Save LED state in this file. Automatically restores at start'},
   'silent': {key: 's', args: 0, description: 'Silence stdout'},
@@ -63,7 +65,7 @@ if(iz(options.port).int().between(1, 1024).valid) {
   console.warn('Warning: TCP ports between 1 and 1024 may require root permission');
 }
 
-if(!iz(options.light).required().valid) {
+if(!iz(options.remote).valid) {
   console.error('Error: Light address required (format: [IP]:[TCP Port]');
   process.exit(1);
 }
@@ -157,11 +159,12 @@ wsServer.on('connection', function(connection) {
         state.leds[target] = data.slice();
         stateToSend.leds[target] = true;
         
-        if(wsRPi.readyState === wsRPi.OPEN) {
+        if(options.remote && wsRPi.readyState === wsRPi.OPEN) {
           wsRPi.send(data);
         }
-        else {
-          log('Error: WebSocket to RPi is not open');
+        
+        if(options.local && localControl.ready) {
+          localControl.setLED(data);
         }
       }
     }
@@ -180,10 +183,10 @@ var wsRPi;
 
 function connectToRPi() {
   try {
-    wsRPi = new ws('ws://' + options.light + '/websocket');
+    wsRPi = new ws('ws://' + options.remote + '/websocket');
   }
   catch(e) {
-    console.error('Error: Cannot connect to light at address' + options.light);
+    console.error('Error: Cannot connect to remote light at address' + options.remote);
     process.exit(1);
   }
   
@@ -207,7 +210,103 @@ function connectToRPi() {
   });
 }
 
-connectToRPi();
+if(options.remote) {
+  connectToRPi();
+}
+
+///////////////////////
+// Local i2c control //
+///////////////////////
+
+var registers = {
+  MODE1     : 0x00,
+  MODE2     : 0x01,
+  LED0_ON_L : 0x06,
+  LED0_ON_H : 0x07,
+  LED0_OFF_L: 0x08,
+  LED0_OFF_H: 0x09,
+  ALL_ON_L  : 0xFA,
+  ALL_ON_H  : 0xFB,
+  ALL_OFF_L : 0xFC,
+  ALL_OFF_H : 0xFD,
+  PRESCALE  : 0xFE,
+}
+
+var modes = {
+  ALLCALL: 0x01,
+  OUTDRV : 0x04,
+  RESTART: 0x80,
+  SLEEP  : 0x10,
+}
+
+var localControl = {ready: false};
+var wire;
+
+if(options.local) {
+  try {
+    log('Starting up i2c...');
+    
+    i2c = require('i2c');
+    wire = new i2c(options.local, {device: '/dev/i2c-1'});
+    
+    wire.writeBytes(registers.ALL_ON_L , [0x00]);
+    wire.writeBytes(registers.ALL_ON_H , [0x00]);
+    wire.writeBytes(registers.ALL_OFF_L, [0x00]);
+    wire.writeBytes(registers.ALL_OFF_H, [0x00]);
+    wire.writeBytes(registers.MODE1, [modes.ALLCALL]);
+    wire.writeBytes(registers.MODE2, [modes.OUTDRV]);
+    
+    // Delay 5 ms for for i2c chip stuff
+    setTimeout(function() {
+      var prescale = Math.floor(2.5e+7/4096/1000 - 0.5); // Controller frequence / 12 bits / duty cycle frequency...
+      
+      wire.writeBytes(registers.MODE1, [0x11]); // Sleep + all call mode, maybe?
+      
+      // Delay 5 ms for for i2c chip stuff
+      setTimeout(function() {
+        wire.writeBytes(registers.PRESCALE, [prescale]);
+        wire.writeBytes(registers.MODE1, [0x01]); // Back to all call
+        
+        // Delay 5 ms for for i2c chip stuff
+        setTimeout(function() {
+          wire.writeBytes(registers.MODE1, [0x81]); // No idea what this is for
+          
+          localControl.setPin = function(pin, duty) {
+            wire.writeBytes(registers.LED0_ON_L  + 4*pin, [0x00       ]);
+            wire.writeBytes(registers.LED0_ON_H  + 4*pin, [0x00       ]);
+            wire.writeBytes(registers.LED0_OFF_L + 4*pin, [duty & 0xFF]);
+            wire.writeBytes(registers.LED0_OFF_H + 4*pin, [duty >> 8  ]);
+          }
+          
+          // The internals of these buffers aren't actually touched anywhere else in the server, except for the target address
+          localControl.setLED = function(data) {
+            var target = data.readUInt16LE(0);
+            var red    = data.readUInt16LE(2);
+            var green  = data.readUInt16LE(4);
+            var blue   = data.readUInt16LE(6);
+            var alpha  = data.readUInt16LE(8);
+            
+            localControl.setPin(3*target    , red  *alpha/4095);
+            localControl.setPin(3*target + 1, green*alpha/4095);
+            localControl.setPin(3*target + 2, blue *alpha/4095);
+          }
+          
+          // Initial values, generally from storage
+          for(var i = 0, endi = state.leds.length; i < endi; ++i) {
+            localControl.setLED(state.leds[i]);
+          }
+          
+          localControl.ready = true;
+          
+          log('i2c pwm controller ready');
+        }, 5);
+      }, 5);
+    }, 5);
+  }
+  catch(e) {
+    log('Error setting up i2c: ' + e);
+  }
+}
 
 /////////
 // CLI //
@@ -222,6 +321,7 @@ if(!options.silent) {
   cli.context.ws             = ws;
   cli.context.stdio          = stdio;
   cli.context.iz             = iz;
+  cli.context.i2c            = i2c;
   cli.context.optionsCLI     = optionsCLI;
   cli.context.optionsFile    = optionsFile;
   cli.context.options        = options;
@@ -231,4 +331,8 @@ if(!options.silent) {
   cli.context.wsRPi          = wsRPi;
   cli.context.state          = state;
   cli.context.stateToSend    = stateToSend;
+  cli.context.registers      = registers;
+  cli.context.modes          = modes;
+  cli.context.localControl   = localControl;
+  cli.context.wire           = wire;
 }
