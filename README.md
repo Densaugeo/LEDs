@@ -15,7 +15,7 @@ sudo ln -s /opt/node/bin/node /bin/node
 sudo ln -s /opt/node/bin/npm /bin/npm
 
 # Might need to remove 'i2c-dev' or 'i2c-bcm2708' kernel module from autostart blacklist in /etc/modprobe.d/raspi-blacklist.conf
-sudo vi /etc/etc/modprobe.d/raspi-blacklist.conf
+sudo vi /etc/modprobe.d/raspi-blacklist.conf
 
 # May also need to load kernel the module
 lsmod | grep i2c
