@@ -183,7 +183,7 @@ var wsRPi;
 
 function connectToRPi() {
   try {
-    wsRPi = new ws('ws://' + options.remote + '/websocket');
+    wsRPi = new ws('ws://' + options.remote + '/');
   }
   catch(e) {
     console.error('Error: Cannot connect to remote light at address' + options.remote);

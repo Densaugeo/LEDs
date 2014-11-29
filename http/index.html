@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no">
 
-<title>Template</title>
+<title>LED Lights!</title>
 
 <script type="text/javascript">
 // Frame buster
@@ -12,19 +13,132 @@ if(top !== self) {
 }
 </script>
 
-<style type='text/css'>
+<script type="text/javascript" src="draggabilly.pkgd.min.js"></script>
+<script type="text/javascript" src="EventEmitter.min.js"></script>
+
+<link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+
+<style type="text/css" id="light_colors">
+body {
+  background: #FFF;
+}
+#background {
+  background: url('diagram-light.jpg') no-repeat center;
+  background-size: auto 100%;
+}
+#sidebar {
+  background: #FFF;
+  box-shadow: 0 0 5px 3px #888;
+}
+#sidebar:hover   { box-shadow: 0 0 5px 3px #088; }
+.panel {
+  background: #FFF;
+  box-shadow: 0 0 5px 3px #888;
+}
+.panel:hover     { box-shadow: 0 0 5px 3px #088; }
+.panel_drag      { background: rgba(255, 255, 255, 0.75); }
+.button:hover    { color: #088; }
+.button:active   { color: #080; }
+.panel_heading   { color: #044; }
+</style>
+
+<style type="text/css" id="dark_colors">
+body {
+  background: #000;
+}
+#background {
+  background: url('diagram-dark.jpg') no-repeat center;
+  background-size: auto 100%;
+}
+#sidebar {
+  background: #000;
+  box-shadow: 0 0 5px 3px #888;
+}
+#sidebar:hover   { box-shadow: 0 0 5px 3px #0FF; }
+.panel {
+  background: #000;
+  box-shadow: 0 0 5px 3px #888;
+}
+.panel:hover     { box-shadow: 0 0 5px 3px #0FF; }
+.panel_drag      { background: rgba(0, 0, 0, 0.75); }
+.button:hover    { color: #0FF; }
+.button:active   { color: #0F0; }
+.panel_heading   { color: #AFF; }
+</style>
+
+<style type="text/css">
+body {
+  font-family: 'Helvetica';
+  font-size: 12pt;
+  color: #888;
+}
+#background {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 48px;
+  right: 0;
+  z-index: -1;
+}
+#sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 48px;
+  z-index: 1;
+}
+#sidebar > i {
+  font-size: 24px;
+  width: 24px;
+  text-align: center;
+  margin: 12px;
+}
+.panel {
+  position: absolute;
+  top: 12px;
+  left: calc(50% - 100px);
+  max-width: 200px;
+  z-index: 1;
+  margin-bottom: 12px;
+  padding: 6px;
+}
+.panel:hover {
+  z-index: 2;
+}
+.panel.is-dragging {
+  z-index: 3;
+}
+.panel_drag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  padding: 6px;
+  font-size: 24px;
+  visibility: hidden;
+}
+.panel_heading {
+  text-align: center;
+}
+.led_sliders {
+  text-align: center;
+}
 </style>
 </head>
 
 <body>
+<div id="sidebar">
+<i id="contrast_button" class="fa fa-adjust button" title="Flip Contrast"></i>
+<i id="clear_button"    class="fa fa-trash-o button" title="Clear Local Storage&#xA;&#xA;This will clear contrast and position settings"></i>
+</div>
+
+<div id="background"></div>
 </body>
 
 <script type="text/javascript">
 
-//////////////
-// Controls //
-//////////////
-
+// Daisy-chainable element maker. Should be library-ized soon
 var forgeElement = function(tagName, properties, children) {
   var element = document.createElement(tagName);
   for(var i in properties) {
@@ -39,20 +153,57 @@ var forgeElement = function(tagName, properties, children) {
 }
 var fE = forgeElement;
 
+// Makes panels, with a very longs script. How to make shorter?
+var Panel = function(panelData) {
+  this.panel =
+    fE('div', {id: panelData.id, className: 'panel'}, [
+      this.dragButton = fE('i', {className: 'fa fa-arrows panel_drag button', title: 'Click and drag to move panel'}),
+      fE('div', {className: 'panel_heading', textContent: panelData.heading}),
+      (this.led = new LED(0)).div,
+    ]
+  );
+  
+  document.body.appendChild(this.panel);
+  
+  with(this) panel.addEventListener('mouseenter', function(e) {
+    dragButton.style.visibility = 'visible';
+  });
+  
+  with(this) panel.addEventListener('mouseleave', function(e) {
+    dragButton.style.visibility = 'hidden';
+  });
+  
+  this.draggie = new Draggabilly(this.panel, {handle: '.panel_drag'});
+  
+  with(this) draggie.on('dragEnd', function() {
+    localStorage['dragger_' + panelData.id + '_top' ] = panel.style.top ;
+    localStorage['dragger_' + panelData.id + '_left'] = panel.style.left;
+  });
+}
+
+// Imported panels for test
+var bg = document.getElementById('background');
+var panels = document.getElementsByClassName('panel');
+var panelDrag = forgeElement('i', {className: 'fa fa-arrows panel_drag button', title: 'Click and drag to move panel'});
+
+//////////////
+// Controls //
+//////////////
+
 var leds = [];
 
 var LED = function(number) {
-  this.state = Uint16Array([number,0,0,0,27]);
+  this.state = Uint16Array([number,0,0,0,0]);
   
-  this.div = fE('div', {}, [
-    this.red   = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
-    this.green = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
-    this.blue  = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
-    this.alpha = fE('input', {type: 'range', min: 0, max: 4095, value: 0}),
+  this.div = fE('div', {className: 'led_sliders'}, [
+    this.red   = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 1}),
+    this.green = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 2}),
+    this.blue  = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 3}),
+    this.alpha = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 4}),
   ]);
   
   with(this) this.update = function(array) {
-    this.state.set(array);
+    state.set(array);
     
     red.value = state[1];
     green.value = state[2];
@@ -60,32 +211,41 @@ var LED = function(number) {
     alpha.value = state[4];
   }
   
-  with(this) red.addEventListener('input', function(e) {
-    state[1] = red.value;
-    ws.send(state.buffer);
-  });
-  
-  with(this) green.addEventListener('input', function(e) {
-    state[2] = green.value;
-    ws.send(state.buffer);
-  });
-  
-  with(this) blue.addEventListener('input', function(e) {
-    state[3] = blue.value;
-    ws.send(state.buffer);
-  });
-  
-  with(this) alpha.addEventListener('input', function(e) {
-    state[4] = alpha.value;
-    ws.send(state.buffer);
-  });
+  with(this) div.addEventListener('input', function(e) {
+    state[e.target._statePosition] = e.target.value;
+    emit('input', {type: 'input', led: number, buffer: state.buffer});
+  }, true);
   
   document.body.appendChild(this.div);
 }
+LED.prototype = new EventEmitter();
 
-for(var i = 0; i < 5; ++i) {
-  leds[i] = new LED(i);
+// Another button for clearing localStorage
+document.getElementById('clear_button').addEventListener('click', function(e) {
+  localStorage.clear();
+});
+
+////////////////////////////////////////////
+// Make contrast button swap color scheme //
+////////////////////////////////////////////
+
+var darkColors = document.getElementById('dark_colors');
+var head = darkColors.parentNode;
+var contrastFlipped = false;
+
+if(localStorage.contrast === 'light') {
+  head.removeChild(darkColors);
 }
+
+document.getElementById('contrast_button').addEventListener('click', function(e) {
+  if(contrastFlipped = !contrastFlipped) {
+    head.removeChild(darkColors);
+    localStorage.contrast = 'light';
+  } else {
+    head.appendChild(darkColors);
+    localStorage.contrast = 'dark';
+  }
+});
 
 ///////////////
 // WebSocket //
@@ -94,6 +254,32 @@ for(var i = 0; i < 5; ++i) {
 var ws =  new WebSocket('ws://' + window.location.host + '/');
 ws.binaryType = 'arraybuffer';
 
+/////////////////////////
+// Other instantiation //
+/////////////////////////
+
+var leds = [];
+
+leds[0] = (new Panel({id: 'lamp1', heading: 'Floor Lamp'})).led;
+leds[1] = (new Panel({id: 'lamp2', heading: 'Futon Lamp'})).led;
+leds[2] = (new Panel({id: 'lamp3', heading: 'Lamp 3'    })).led;
+leds[3] = (new Panel({id: 'lamp4', heading: 'Lamp 4'    })).led;
+leds[4] = (new Panel({id: 'lamp5', heading: 'Lamp 5'    })).led;
+
+for(var i = 0, endi = panels.length; i < endi; ++i) {
+  if(localStorage['dragger_' + panels[i].id + '_top']) {
+    panels[i].style.top  = localStorage['dragger_' + panels[i].id + '_top' ];
+    panels[i].style.left = localStorage['dragger_' + panels[i].id + '_left'];
+  }
+  else {
+    panels[i].style.top = 12 + 200*i + 'px';
+  }
+}
+
+/////////////
+// Routing //
+/////////////
+
 // Receive state data from relay server
 ws.onmessage = function(e) {
   var view = Uint16Array(e.data);
@@ -101,6 +287,12 @@ ws.onmessage = function(e) {
   if(leds[view[0]]) {
     leds[view[0]].update(view);
   }
+}
+
+for(var i = 0, endi = leds.length; i < endi; ++i) {
+  leds[i].on('input', function(e) {
+    ws.send(e.buffer);
+  });
 }
 
 /////////////////////
