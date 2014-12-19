@@ -241,6 +241,7 @@ var modes = {
 
 var localControl = {ready: false};
 var wire;
+var blankFunction = function(){};
 
 if(options.local) {
   try {
@@ -249,33 +250,33 @@ if(options.local) {
     i2c = require('i2c');
     wire = new i2c(options.local, {device: '/dev/i2c-1'});
     
-    wire.writeBytes(registers.ALL_ON_L , [0x00]);
-    wire.writeBytes(registers.ALL_ON_H , [0x00]);
-    wire.writeBytes(registers.ALL_OFF_L, [0x00]);
-    wire.writeBytes(registers.ALL_OFF_H, [0x00]);
-    wire.writeBytes(registers.MODE1, [modes.ALLCALL]);
-    wire.writeBytes(registers.MODE2, [modes.OUTDRV]);
+    wire.writeBytes(registers.ALL_ON_L , [0x00], blankFunction);
+    wire.writeBytes(registers.ALL_ON_H , [0x00], blankFunction);
+    wire.writeBytes(registers.ALL_OFF_L, [0x00], blankFunction);
+    wire.writeBytes(registers.ALL_OFF_H, [0x00], blankFunction);
+    wire.writeBytes(registers.MODE1, [modes.ALLCALL], blankFunction);
+    wire.writeBytes(registers.MODE2, [modes.OUTDRV], blankFunction);
     
     // Delay 5 ms for for i2c chip stuff
     setTimeout(function() {
       var prescale = Math.floor(2.5e+7/4096/1000 - 0.5); // Controller frequence / 12 bits / duty cycle frequency...
       
-      wire.writeBytes(registers.MODE1, [0x11]); // Sleep + all call mode, maybe?
+      wire.writeBytes(registers.MODE1, [0x11], blankFunction); // Sleep + all call mode, maybe?
       
       // Delay 5 ms for for i2c chip stuff
       setTimeout(function() {
-        wire.writeBytes(registers.PRESCALE, [prescale]);
-        wire.writeBytes(registers.MODE1, [0x01]); // Back to all call
+        wire.writeBytes(registers.PRESCALE, [prescale], blankFunction);
+        wire.writeBytes(registers.MODE1, [0x01], blankFunction); // Back to all call
         
         // Delay 5 ms for for i2c chip stuff
         setTimeout(function() {
-          wire.writeBytes(registers.MODE1, [0x81]); // No idea what this is for
+          wire.writeBytes(registers.MODE1, [0x81], blankFunction); // No idea what this is for
           
           localControl.setPin = function(pin, duty) {
-            wire.writeBytes(registers.LED0_ON_L  + 4*pin, [0x00       ]);
-            wire.writeBytes(registers.LED0_ON_H  + 4*pin, [0x00       ]);
-            wire.writeBytes(registers.LED0_OFF_L + 4*pin, [duty & 0xFF]);
-            wire.writeBytes(registers.LED0_OFF_H + 4*pin, [duty >> 8  ]);
+            wire.writeBytes(registers.LED0_ON_L  + 4*pin, [0x00       ], blankFunction);
+            wire.writeBytes(registers.LED0_ON_H  + 4*pin, [0x00       ], blankFunction);
+            wire.writeBytes(registers.LED0_OFF_L + 4*pin, [duty & 0xFF], blankFunction);
+            wire.writeBytes(registers.LED0_OFF_H + 4*pin, [duty >> 8  ], blankFunction);
           }
           
           // The internals of these buffers aren't actually touched anywhere else in the server, except for the target address
