@@ -81,6 +81,7 @@ if(document.fullscreenElement === undefined) {
 ///////////////
 
 var sidebar = new PanelUI.Sidebar();
+sidebar.addButton({buttonName: 'all'     , faClass: 'fa-sun-o'     , title: 'Not yet implemented'});
 sidebar.addButton({buttonName: 'fs'      , faClass: 'fa-arrows-alt', title: 'Fullscreen'         });
 sidebar.addButton({buttonName: 'contrast', faClass: 'fa-adjust'    , title: 'Flip Contrast'      });
 sidebar.addButton({buttonName: 'clear'   , faClass: 'fa-recycle'   , title: 'Clear local storage'});
@@ -88,6 +89,8 @@ sidebar.addButton({buttonName: 'clear'   , faClass: 'fa-recycle'   , title: 'Cle
 var panels = {};
 
 var darkColors = document.getElementById('dark_colors');
+
+var allEnabled = true;
 
 ///////////////
 // WebSocket //
@@ -118,6 +121,14 @@ ws.onmessage = function(e) {
 ////////////
 // Events //
 ////////////
+
+sidebar.on('all', function() {
+  allEnabled = !allEnabled;
+  
+  for(var i in panels) {
+    ws.send(new Packets.Enable({name: i, enable: allEnabled}));
+  }
+});
 
 sidebar.on('fs', function() {
   if(document.fullscreenElement == null) {

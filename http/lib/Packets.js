@@ -16,12 +16,15 @@ var Packets = {};
  */
 Packets.Set_RGB_LED = function Set_RGB_LED(options) {
   // @prop String port -- Dataflow port for this type of packet (always 'set_RGB_LED')
-  // @option String port -- Set .port
   this.port = 'set_RGB_LED';
   
   // @prop String name -- Name of RGB LED to set
   // @option String name -- Set .name
   this.name = String(options.name);
+  
+  // @prop Boolean enabled -- True to enable, false to disable
+  // @option Boolean enabled -- Set .enabled
+  this.enabled = Boolean(options.enabled);
   
   // @prop Number r -- Red color channel
   // @option Number r -- Set .r
@@ -51,7 +54,6 @@ Packets.List = function List(options) {
   var self = this;
   
   // @prop String port -- Dataflow port for this type of packet (always 'list')
-  // @option String port -- Set .port
   this.port = 'list';
   
   // @prop [{String name, String type}] components -- List of Components, with name and type (by constructor name)
@@ -85,7 +87,6 @@ Packets.Update = function Update(options) {
   var self = this;
   
   // @prop String port -- Dataflow port for this type of packet (always 'update')
-  // @option String port -- Set .port
   this.port = 'update';
   
   // @prop [Packets.Set_RGB_LED] subpackets -- List of subpackets, with each subpacket representing an update for one Component

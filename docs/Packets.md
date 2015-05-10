@@ -27,11 +27,11 @@ var sanitized_packet = new Packets.Set_RGB_LED(suspicious_packet);
 
 `Number` **b** -- Set .b
 
+`Boolean` **enabled** -- Set .enabled
+
 `Number` **g** -- Set .g
 
 `String` **name** -- Set .name
-
-`String` **port** -- Set .port
 
 `Number` **r** -- Set .r
 
@@ -40,6 +40,8 @@ var sanitized_packet = new Packets.Set_RGB_LED(suspicious_packet);
 `Number` **a** -- Alpha channel, used for overall dimmer
 
 `Number` **b** -- Blue color channel
+
+`Boolean` **enabled** -- True to enable, false to disable
 
 `Number` **g** -- Green color channel
 
@@ -66,8 +68,6 @@ packet.addComponent(some_component);
 
 `[{String` **name,** String type}] components -- Set .components
 
-`String` **port** -- Set .port
-
 #### Properties
 
 `[{String` **name,** String type}] components -- List of Components, with name and type (by constructor name)
@@ -93,8 +93,6 @@ packet.addSubpacket(new Packets.Set_RGB_LED(LED_that_needs_update));
 ```
 
 #### Options
-
-`String` **port** -- Set .port
 
 `[Packets.Set_RGB_LED]` **subpackets** -- Set .subpackets
 

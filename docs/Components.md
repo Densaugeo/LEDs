@@ -37,6 +37,8 @@ led.pins.forEach(function(v, i, a) {
 
 `Number` **controllerIndex** -- Index of Controller, used by host to keep track of Components
 
+`Boolean` **enabled** -- Exactly what it sounds like
+
 `Number` **g** -- Green color channel
 
 `String` **name** -- Name of this RGB_LED to set
