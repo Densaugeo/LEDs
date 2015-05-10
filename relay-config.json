@@ -4,6 +4,6 @@
   "silent": false,
   "repl"  : true,
   "remotes": [
-    "metis:8080"
+    "localhost:8077"
   ]
 }
