@@ -1,5 +1,5 @@
 {
-  "name": "Needs a name",
+  "name": "Needs_a_name",
   "description": "Connect i2c controllers to a network/web UI",
   "author": "Densaugeo",
   "dependencies": {
