@@ -126,7 +126,9 @@ sidebar.on('all', function() {
   allEnabled = !allEnabled;
   
   for(var i in panels) {
-    ws.send(new Packets.Enable({name: i, enable: allEnabled}));
+    panels[i].enabled = allEnabled;
+    
+    panels[i].emitSet_RGB_LED();
   }
 });
 
@@ -164,6 +166,8 @@ wsNode.on('list', function(packet) {
 
 wsNode.on('update', function(packet) {
   packet.subpackets.forEach(function(v, i, a) {
+    panels[v.name].enabled = v.enabled;
+    
     if(!panels[v.name].sliding) {
       panels[v.name].r.value = v.r*4095;
       panels[v.name].g.value = v.g*4095;

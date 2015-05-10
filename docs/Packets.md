@@ -16,7 +16,7 @@ Packet to set a new state on a Component.RGB_LED
 var packet = new Packets.Set_RGB_LED(an_RGB_LED_instance);
 var another_RGB_LED_instance.set(packet); // Now the two instances have the same settings
 
-var manual_packet = new Packets.Set_RGB_LED({name: 'An RGB LED', r: 1, g: 0.5, b: 0.25, a: 1});
+var manual_packet = new Packets.Set_RGB_LED({name: 'An RGB LED', enabled: true, r: 1, g: 0.5, b: 0.25, a: 1});
 
 var sanitized_packet = new Packets.Set_RGB_LED(suspicious_packet);
 ```

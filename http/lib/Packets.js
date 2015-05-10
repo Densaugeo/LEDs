@@ -10,7 +10,7 @@ var Packets = {};
  * @example var packet = new Packets.Set_RGB_LED(an_RGB_LED_instance);
  * @example var another_RGB_LED_instance.set(packet); // Now the two instances have the same settings
  * @example
- * @example var manual_packet = new Packets.Set_RGB_LED({name: 'An RGB LED', r: 1, g: 0.5, b: 0.25, a: 1});
+ * @example var manual_packet = new Packets.Set_RGB_LED({name: 'An RGB LED', enabled: true, r: 1, g: 0.5, b: 0.25, a: 1});
  * @example
  * @example var sanitized_packet = new Packets.Set_RGB_LED(suspicious_packet);
  */

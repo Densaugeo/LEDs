@@ -19,6 +19,19 @@ ComponentPanels.RGB_LED = function(options) {
   // @option String name -- Set .name
   this.name = String(options.name);
   
+  // @prop Boolean enabled -- Specifies whether related Component on host should be enabled. Overwrites color of heading
+  var enabled = true;
+  Object.defineProperty(this, 'enabled', {
+    get: function() {
+      return enabled;
+    },
+    set: function(v) {
+      enabled = v;
+      this.domElement.children[0].style.color = enabled ? '' : '#888';
+    },
+    enumerable: true,
+  });
+  
   // @prop [HTMLElement] sliders -- div to hold all the sliders
   this.sliders = fE('div', {className: 'led_sliders'}, [
     // In FF, sliders with fractional values get highlighted in ways that seem to ignore CSS, so can't use 0..1 range
@@ -41,13 +54,18 @@ ComponentPanels.RGB_LED = function(options) {
     self.sliding = true;
     setTimeout(resetSliding, 1000);
     
-    self.emit('Set_RGB_LED', new Packets.Set_RGB_LED({name: self.name, r: self.r.value/4095, g: self.g.value/4095, b: self.b.value/4095, a: self.a.value/4095}));
+    self.emitSet_RGB_LED();
   });
   
   this.open();
 }
 ComponentPanels.RGB_LED.prototype = Object.create(PanelUI.Panel.prototype);
 ComponentPanels.RGB_LED.prototype.constructor = ComponentPanels.RGB_LED;
+
+// @method proto undefined emitSet_RGB_LED() -- Emits a Set_RGB_LED packet with all relevant values
+ComponentPanels.RGB_LED.prototype.emitSet_RGB_LED = function emitSet_RGB_LED() {
+  this.emit('Set_RGB_LED', new Packets.Set_RGB_LED({name: this.name, enabled: this.enabled, r: this.r.value/4095, g: this.g.value/4095, b: this.b.value/4095, a: this.a.value/4095}));
+}
 
 if(typeof module != 'undefined' && module != null && module.exports) {
   module.exports = ComponentPanels;

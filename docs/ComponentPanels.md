@@ -22,9 +22,15 @@ var led = new ComponentPanels.RGB_LED({id: 'led1', heading: 'A light', name: 'Sa
 
 #### Properties
 
+`Boolean` **enabled** -- Specifies whether related Component on host should be enabled. Overwrites color of heading
+
 `String` **name** -- Name of associated component on the host
 
 `[HTMLElement]` **sliders** -- div to hold all the sliders
 
 `Boolean` **sliding** -- Stays true for 1000ms after sliders are slid
+
+#### Methods
+
+`undefined` proto **emitSet_RGB_LED**`()` -- Emits a Set_RGB_LED packet with all relevant values
 
