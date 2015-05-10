@@ -15,13 +15,11 @@
 .panel {
   position: relative;
   top: 12px;
-  margin-bottom: 24px;
   left: calc(50% - 100px);
-  max-width: 200px;
+  width: 200px;
+  margin-bottom: 24px;
 }
-.panel_drag {
-  display: none;
-}
+
 .led_sliders {
   text-align: center;
 }
@@ -37,14 +35,11 @@ if(top !== self) {
 <script type="text/javascript" src="lib/draggabilly.pkgd.min.js"></script>
 <script type="text/javascript" src="lib/DF.js"></script>
 <script type="text/javascript" src="lib/PanelUI/PanelUI.js"></script>
+<script type="text/javascript" src="lib/ComponentPanels.js"></script>
+<script type="text/javascript" src="lib/Packets.js"></script>
 </head>
 
 <body>
-<div id="sidebar">
-<i id="contrast_button" class="fa fa-adjust button" title="Flip Contrast"></i>
-<i id="clear_button"    class="fa fa-trash-o button" title="Clear Local Storage&#xA;&#xA;This will clear contrast and position settings"></i>
-</div>
-
 <div id="background"></div>
 </body>
 
@@ -66,67 +61,73 @@ var Panel = function(options) {
 Panel.prototype = Object.create(PanelUI.Panel.prototype);
 Panel.prototype.constructor = Panel;
 
-var LED = function(number) {
-  DF.Node.call(this);
-  
-  this.state = Uint16Array([number,0,0,0,0]);
-  
-  this.div = fE('div', {className: 'led_sliders'}, [
-    this.red   = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 1}),
-    this.green = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 2}),
-    this.blue  = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 3}),
-    this.alpha = fE('input', {type: 'range', min: 0, max: 4095, value: 0, _statePosition: 4}),
-  ]);
-  
-  with(this) this.update = function(array) {
-    state.set(array);
-    
-    red.value = state[1];
-    green.value = state[2];
-    blue.value = state[3];
-    alpha.value = state[4];
-  }
-  
-  with(this) div.addEventListener('input', function(e) {
-    state[e.target._statePosition] = e.target.value;
-    emit('input', {type: 'input', led: number, buffer: state.buffer});
-  }, true);
-  
-  document.body.appendChild(this.div);
+// Shim for vendor-prefixed fullscreen API
+if(HTMLElement.prototype.requestFullscreen == undefined) {
+  HTMLElement.prototype.requestFullscreen = HTMLElement.prototype.msRequestFullscreen || HTMLElement.prototype.mozRequestFullScreen || HTMLElement.prototype.webkitRequestFullscreen;
 }
-LED.prototype = Object.create(DF.Node.prototype);
-LED.prototype.constructor = LED;
+if(document.exitFullscreen == undefined) {
+  document.exitFullscreen = document.msExitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen;
+}
+if(document.fullscreenElement === undefined) {
+  Object.defineProperty(document, 'fullscreenElement', {
+    get: function() {
+      return document.msFullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
+    },
+  });
+}
 
 ///////////////
 // Instances //
 ///////////////
 
 var sidebar = new PanelUI.Sidebar();
-sidebar.addButton({buttonName: 'contrast', faClass: 'fa-adjust' , title: 'Flip Contrast'      });
-sidebar.addButton({buttonName: 'clear'   , faClass: 'fa-recycle', title: 'Clear local storage'});
+sidebar.addButton({buttonName: 'fs'      , faClass: 'fa-arrows-alt', title: 'Fullscreen'         });
+sidebar.addButton({buttonName: 'contrast', faClass: 'fa-adjust'    , title: 'Flip Contrast'      });
+sidebar.addButton({buttonName: 'clear'   , faClass: 'fa-recycle'   , title: 'Clear local storage'});
 
-var bg = document.getElementById('background');
-
-var panels = [];
-panels[0] = new Panel({id: 'lamp1', heading: 'Floor Lamp'});
-panels[1] = new Panel({id: 'lamp2', heading: 'Futon Lamp'});
-panels[2] = new Panel({id: 'lamp3', heading: 'Lamp 3'    });
-panels[3] = new Panel({id: 'lamp4', heading: 'Lamp 4'    });
-panels[4] = new Panel({id: 'lamp5', heading: 'Lamp 5'    });
+var panels = {};
 
 var darkColors = document.getElementById('dark_colors');
 
-var leds = [];
+///////////////
+// WebSocket //
+///////////////
 
-panels.forEach(function(v, i, a) {
-  leds[i] = v.led;
-});
+var ws =  new WebSocket('ws://' + window.location.host + '/');
+var wsNode = new DF.Node();
+
+ws.onopen = function(e) {
+  ws.send(JSON.stringify({port: 'req_list'}));
+  ws.send(JSON.stringify({port: 'req_update'}));
+}
+
+// Receive state data from relay server
+ws.onmessage = function(e) {
+  var packet = JSON.parse(e.data);
+  
+  switch(packet.port) {
+    case 'list':
+      wsNode.emit('list', new Packets.List(packet));
+      break;
+    case 'update':
+      wsNode.emit('update', new Packets.Update(packet));
+      break;
+  }
+}
 
 ////////////
 // Events //
 ////////////
 
-sidebar.on('contrast', function(e) {
+sidebar.on('fs', function() {
+  if(document.fullscreenElement == null) {
+    document.body.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+sidebar.on('contrast', function() {
   if(darkColors.parentNode === document.head) {
     document.head.removeChild(darkColors);
     localStorage.contrast = 'light';
@@ -136,8 +137,29 @@ sidebar.on('contrast', function(e) {
   }
 });
 
-sidebar.on('clear', function(e) {
+sidebar.on('clear', function() {
   localStorage.clear();
+});
+
+wsNode.on('list', function(packet) {
+  packet.components.forEach(function(v, i, a) {
+    panels[v.name] = new ComponentPanels[v.type]({id: v.name, heading: v.name, name: v.name});
+    
+    panels[v.name].on('Set_RGB_LED', function(e) {
+      ws.send(JSON.stringify(e));
+    });
+  });
+});
+
+wsNode.on('update', function(packet) {
+  packet.subpackets.forEach(function(v, i, a) {
+    if(!panels[v.name].sliding) {
+      panels[v.name].r.value = v.r*4095;
+      panels[v.name].g.value = v.g*4095;
+      panels[v.name].b.value = v.b*4095;
+      panels[v.name].a.value = v.a*4095;
+    }
+  });
 });
 
 ////////////////////
@@ -146,28 +168,6 @@ sidebar.on('clear', function(e) {
 
 if(localStorage.contrast === 'light') {
   document.head.removeChild(darkColors);
-}
-
-///////////////
-// WebSocket //
-///////////////
-
-var ws =  new WebSocket('ws://' + window.location.host + '/');
-ws.binaryType = 'arraybuffer';
-
-// Receive state data from relay server
-ws.onmessage = function(e) {
-  var view = Uint16Array(e.data);
-  
-  if(leds[view[0]]) {
-    leds[view[0]].update(view);
-  }
-}
-
-for(var i = 0, endi = leds.length; i < endi; ++i) {
-  leds[i].on('input', function(e) {
-    ws.send(e.buffer);
-  });
 }
 
 /////////////////////

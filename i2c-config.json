@@ -1,0 +1,15 @@
+{
+  "ip"    : "0.0.0.0",
+  "port"  : 8077,
+  "silent": false,
+  "repl"  : true,
+  
+  "i2c_update_interval" : 25,
+  "ws_update_interval"  : 100,
+  "file_update_interval": 10000,
+  
+  "i2c_controllers": [
+  ],
+  "attached_components": [
+  ]
+}

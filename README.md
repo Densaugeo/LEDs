@@ -28,10 +28,13 @@ git clone https://github.com/Densaugeo/LEDs
 cd LEDs/
 npm install
 
-# Start the server
-sudo node server.js -l [your i2c address] # Sudo required to access i2c
-# Or:
-node server.js -r [your remote server's IP:port]
+# Edit config files
+vi i2c-config.json
+vi relay-config.json
+
+# Start the servers
+sudo node i2c-server.js # Sudo required to access i2c
+node relay-server.js
 ~~~
 
 

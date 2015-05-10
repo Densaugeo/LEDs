@@ -1,12 +1,10 @@
 {
-  "name": "Template",
-  "description": "A template (surprise!)",
+  "name": "Needs a name",
+  "description": "Connect i2c controllers to a network/web UI",
   "author": "Densaugeo",
   "dependencies": {
     "express": "3.4.x",
     "ws": "0.4.x",
-    "stdio": "0.1.x",
-    "iz": "0.4.x",
     "i2c": "0.1.x"
   },
   "engine": "node 0.10.x"
