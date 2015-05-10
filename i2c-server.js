@@ -117,11 +117,13 @@ wsServer.on('connection', function(connection) {
         var screenedPacket = new Packets.Set_RGB_LED(packet);
         
         // Set a component
-        attachedComponents[screenedPacket.name].set(screenedPacket);
-        
-        i2cUpdater.notify(screenedPacket);
-        wsUpdater.notify(screenedPacket);
-        fileUpdater.notify(screenedPacket);
+        if(attachedComponents[screenedPacket.name] != null) {
+          attachedComponents[screenedPacket.name].set(screenedPacket);
+          
+          i2cUpdater.notify(screenedPacket);
+          wsUpdater.notify(screenedPacket);
+          fileUpdater.notify(screenedPacket);
+        }
         
         break;
     }
