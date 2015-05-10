@@ -1,5 +1,6 @@
 /**
  * @description UI panels for the component supported by hosts for [project needs name]
+ * @depends PanelUI.js
  */
 var ComponentPanels = {};
 

@@ -1,0 +1,26 @@
+{
+  "ip"    : "0.0.0.0",
+  "port"  : 8077,
+  "silent": false,
+  "repl"  : true,
+  
+  "i2c_update_interval" : 25,
+  "ws_update_interval"  : 100,
+  "file_update_interval": 10000,
+  
+  "i2c_controllers": [
+    {
+      "type": "PCA9685",
+      "bus": "/dev/i2c-0",
+      "address": 64
+    }
+  ],
+  "attached_components": [
+    {
+      "name": "An LED",
+      "type": "RGB_LED",
+      "controller_index": 0,
+      "pins": [3, 4, 5]
+    }
+  ]
+}

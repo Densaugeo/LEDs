@@ -35,6 +35,9 @@ vi relay-config.json
 # Start the servers
 sudo node i2c-server.js # Sudo required to access i2c
 node relay-server.js
+
+# View the web interface
+firefox localhost:8080/
 ~~~
 
 

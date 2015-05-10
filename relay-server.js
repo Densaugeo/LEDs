@@ -44,6 +44,7 @@ log('Static file server listening at http://' + options.ip + ':' + options.port 
 ///////////////
 
 var wsServer = new ws.Server({server: httpServer, path: '/'});
+log('WS server listening at ws://' + options.ip + ':' + options.port + '/');
 
 wsServer.on('connection', function(connection) {
   log('Received incoming WebSocket');
@@ -114,9 +115,7 @@ options.remotes.forEach(function(v, i, a) {
     
     switch(packet.port) {
       case 'list':
-        console.log(packet);
         var screenedPacket = new Packets.List(packet);
-        console.log(screenedPacket);
         
         screenedPacket.components.forEach(function(v, i, a) {
           componentList.addComponent(v);

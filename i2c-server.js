@@ -78,6 +78,7 @@ httpServer.listen(options.port, options.ip);
 ///////////////
 
 var wsServer = new ws.Server({server: httpServer, path: '/'});
+log('WS server listening at ws://' + options.ip + ':' + options.port + '/');
 
 wsServer.on('connection', function(connection) {
   log('Received incoming WebSocket');
