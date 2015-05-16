@@ -90,26 +90,28 @@ wsServer.on('connection', function(connection) {
 
 var hostConnections = [];
 
-options.remotes.forEach(function(v, i, a) {
+var openHostConnection = function(address) {
   try {
-    var connection = new ws('ws://' + v + '/');
+    var connection = new ws('ws://' + address + '/');
   }
   catch(e) {
-    log('Error: Cannot open WebSocket to remote host at ' + v);
+    log('Error: Cannot open WebSocket to remote host at ' + address);
     process.exit(1);
   }
   
   connection.on('open', function() {
-    log('Opened WebSocket to remote host at ' + v);
+    log('Opened WebSocket to remote host at ' + address);
     
     connection.send(JSON.stringify({port: 'req_list'}));
+    
+    hostConnections[i] = connection;
   });
     
   connection.on('message', function(data) {
     try {
       var packet = JSON.parse(data);
     } catch(e) {
-      log('Bad JSON received on WebSocket to remote host at ' + v);
+      log('Bad JSON received on WebSocket to remote host at ' + address);
       return;
     }
     
@@ -135,15 +137,19 @@ options.remotes.forEach(function(v, i, a) {
   });
   
   connection.on('close', function() {
-    log('Closed WebSocket to remote host at ' + v + '');
+    log('Closed WebSocket to remote host at ' + address + '');
   });
   
   connection.on('error', function(e) {
-    log('Error opening WebSocket to remote host at ' + v + ': ' + e);
+    log('Error opening WebSocket to remote host at ' + address + ': ' + e + '. Retrying in 10s...');
+    
+    setTimeout(function() {
+      openHostConnection(address);
+    }, 10000);
   });
-  
-  hostConnections[i] = connection;
-});
+}
+
+options.remotes.forEach(openHostConnection);
 
 /////////
 // CLI //
