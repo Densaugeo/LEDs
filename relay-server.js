@@ -104,7 +104,7 @@ var openHostConnection = function(address) {
     
     connection.send(JSON.stringify({port: 'req_list'}));
     
-    hostConnections[i] = connection;
+    hostConnections.push(connection);
   });
     
   connection.on('message', function(data) {
