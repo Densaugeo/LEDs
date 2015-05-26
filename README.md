@@ -14,14 +14,17 @@ sudo mv node-v0.10.28-linux-arm-pi/ node
 sudo ln -s /opt/node/bin/node /bin/node
 sudo ln -s /opt/node/bin/npm /bin/npm
 
+# i2c needs to be enable on the Raspberry Pi. Run raspi-config and enable i2c in the advanced tab
+raspi-config
+
 # Might need to remove 'i2c-dev' or 'i2c-bcm2708' kernel module from autostart blacklist in /etc/modprobe.d/raspi-blacklist.conf
 sudo vi /etc/modprobe.d/raspi-blacklist.conf
 
-# May also need to load kernel the module
+# May also need to load kernel the modules
 lsmod | grep i2c
-# If you see a 'i2c-bcm2708' module, it's already loaded. If not, load it manually
-sudo modprobe i2c-bcm2708
-# And to make it load automatically on boot, add the line 'i2c-bcm2708' to /etc/modules
+# If you see 'i2c-dev' and 'i2c-bcm2708' modules, they're already loaded. If not, load them manually
+sudo modprobe i2c-dev i2c-bcm2708
+# And to make it load automatically on boot, add the lines 'i2c-dev' and 'i2c-bcm2708' to /etc/modules
 
 # Get the code and install npm dependencies
 git clone https://github.com/Densaugeo/LEDs
