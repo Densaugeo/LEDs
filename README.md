@@ -39,6 +39,12 @@ vi relay-config.json
 sudo node i2c-server.js # Sudo required to access i2c
 node relay-server.js
 
+# To make servers start automatically, add the following two lines to cron:
+crontab -e
+# Write in cron (not in shell):
+@reboot (cd /home/pi/LEDs/ && sudo node i2c-server.js > i2c-server.log)
+@reboot (cd /home/pi/LEDs/ && node relay-server.js > relay-server.log)
+
 # View the web interface
 firefox localhost:8080/
 ~~~
