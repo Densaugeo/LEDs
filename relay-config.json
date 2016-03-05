@@ -4,6 +4,7 @@
   "silent": false,
   "repl"  : true,
   "remotes": [
-    "localhost:8077"
+    "daedalus:8077",
+    "icarus:8077"
   ]
 }
